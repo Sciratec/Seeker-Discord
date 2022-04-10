@@ -18,10 +18,6 @@ async def on_message(message):
     if message.author == client.user:
         return
     msg = message.content
-
-    if msg.startswith('$'):
-        await message.channel.send("*<Ticker Name>*")
-
     await client.process_commands(message)
 
 # @client.command(name="vt", description="Search Virustotal and pull IOCS. Example: !vt <SHA256>")
