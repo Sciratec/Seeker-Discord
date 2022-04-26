@@ -1,3 +1,3 @@
 # Seeker-Discord
 
-Plugging in Seeker into a Discord Bot.
+A Discord bot running Seeker services 
