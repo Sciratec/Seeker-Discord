@@ -1,8 +1,11 @@
+from email import message
 from discord.ext import commands
 from os import getenv
 from dotenv import load_dotenv
-from vt import virustotal
 from ht import hatchingTriage
+from urlscan import urlSearch, urlScan
+from re import search
+
 
 load_dotenv()
 BOT_TOKEN = getenv('DISCORD_TOKEN')
@@ -20,36 +23,29 @@ async def on_message(message):
     msg = message.content
     await client.process_commands(message)
 
-# @client.command(name="vt", description="Search Virustotal and pull IOCS. Example: !vt <SHA256>")
-# async def vt(ctx, sha256Hash):
-    
-#     if ctx.channel.name == ("malware-analysis"):
-#         names, url, ips, context, domainRelation = virustotal(sha256Hash)
-    
-#         # if context and type(context) == list:
-#         #     await ctx.send("Context:")
-#         #     for a, b in context:
-#         #         await ctx.send(f"{a}, {b}")
+@client.command(name="usearch", brief="Search for an artifact on urlscan", description="Search for an artifact on urlscan")
+async def usearch(ctx, artifact):
+    ip_regex = "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
 
-#         if names and type(names) == list:
-#             await ctx.send("Malware Names(s):")
-#             stripped_names = ", ".join(names)
-#             await ctx.send(stripped_names)
+    if "http" in artifact:
+        await ctx.message.delete()
+        await ctx.send("Do not use HTTP/HTTPS in your search")
+    elif search(ip_regex, artifact):
+        await ctx.message.delete()
+        await ctx.send("IPs not implemented yet! Sorry.")
+    else:
+        times_seen, time_split, has_more, recent_screenshot = urlSearch(artifact)
+        if times_seen == 10000 and has_more == True:
+            await ctx.send(f"```Seen more than {times_seen} times\nRecently Seen: {time_split[0]}```")
+            await ctx.send(f"Recent Screenshot: {recent_screenshot}")
+        else:
+            await ctx.send(f"```Times seen: {times_seen}\nRecently Seen: {time_split[0]}```")
+            await ctx.send(f"Recent Screenshot: {recent_screenshot}")
+         
 
-#         if url and type(url) == list:
-#             await ctx.send("Contacted URLS:")
-#             stripped_domains = ", ".join(url)
-#             await ctx.send(stripped_domains)
-
-#         if ips and type(ips) == list:
-#             await ctx.send("IP IoCs:")
-#             stripped_ips = ", ".join(ips)
-#             await ctx.send(stripped_ips)
-    
-#         if domainRelation and type(domainRelation) == list:
-#             await ctx.send("Relational Domain(s):")
-#             stripped_other = ", ".join(domainRelation)
-#             await ctx.send(stripped_other)
+@client.command(name="uscan", brief="Scan an artifact on urlscan", description="Scan an artifact on urlscan")
+async def uscan(ctx, artifact):
+    pass
 
 @client.command(name="ht", brief="Search Hatching Triage by using a SHA256 hash", description="Search Hatching Triage and pull IOCS/Configs. Example: !ht <SHA256>")
 async def ht(ctx, sha256Hash):
